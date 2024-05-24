@@ -1,0 +1,48 @@
+version: '3'
+services:
+  # comick-dl:
+  #   build: .
+  #   container_name: palomitas-scheduler
+  #   restart: unless-stopped
+  #   environment:
+  #     - REDIS_URL=cdl_redis:6379
+  #     - STORAGE_PATH=/app/storage
+  #   volumes:
+  #     - ./storage:/app/storage
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     - cdl_redis
+
+  cdl_redis:
+    container_name: cdl_redis
+    hostname: cdl_redis
+    image: eqalpha/keydb
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+
+  cdl_admin:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:cdl_redis:6379
+    ports:
+      - 8081:8081
+    depends_on:
+      - cdl_redis
+
+  cdl_admin_jobs:
+    image: ejhayes/nodejs-bull-monitor:latest
+    ports:
+      - 3333:3000
+    depends_on:
+      - cdl_redis
+    environment:
+      REDIS_HOST: cdl_redis
+      REDIS_PORT: 6379
+      BULL_WATCH_QUEUE_PREFIXES: bull
+      PORT: 3000
+      UI: bull-master
